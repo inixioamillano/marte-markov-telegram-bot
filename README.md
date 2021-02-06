@@ -33,7 +33,7 @@ To try it out, you can add the [bot](https://telegram.me/iammartebot) to any of 
 
 ## Release History
 * 0.1.2
-    * ADD event on @botusername message
+    * ADD: event on @botusername message
 * 0.1.1
     * ADD: encryption. Messages in the database are encrypted. Just the bot can read the content of the learnt messages
 * 0.1.0
