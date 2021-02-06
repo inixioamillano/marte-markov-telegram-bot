@@ -19,7 +19,7 @@ This bot reads messages from a group and periodically speaks generating random m
 
 ## Launch
 
-Configure the environment variables in the .env file. You'll need a Telegram API key. You can easily generate it with the Telegram BotFather bot ([@bot](https://telegram.me/bot)).
+Configure the environment variables in the .env file. You'll need a Telegram API key. You can easily generate it with the Telegram BotFather bot ([@BotFather](https://t.me/BotFather)).
 
 After correctly configuring the token, the database URL and the encryption key, you can run the bot 
 
