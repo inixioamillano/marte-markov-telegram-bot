@@ -1,6 +1,7 @@
 const MarkovGen = require('markov-generator');
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
+const mongooseFieldEncryption = require("mongoose-field-encryption").fieldEncryption;
 var pjson = require('./package.json');
 
 require('dotenv').config();
@@ -33,14 +34,25 @@ mongoose.connect(`mongodb://${process.env.DB_HOST}:27017/martebot`, {useNewUrlPa
 .then(() => console.log("Interesting..."))
 .catch(() => console.log("Whoops... Something went wrong..."));
 
-const Message = new mongoose.model('Message', { 
+const MessageSchema = new mongoose.Schema({ 
     text: String, 
     chatId: Number 
 });
 
+MessageSchema.plugin(mongooseFieldEncryption, { fields: ["text"], secret: process.env.ENCRYPT_KEY });
+
+const Message = new mongoose.model('Message', MessageSchema);
+
 const generateMarkovMessage = async (chatId) => {
     const messages = await Message.find({chatId});
-    const input = messages.map(m => m.text);
+    const input = messages.map(m => {
+        // First messages were stored without encryption. Since v0.1.1 all the messages are securely stored
+        if(m.__enc_text){
+            const dec = fieldEncryption.decryptFieldsSync(m, ["text"], process.env.ENCRYPT_KEY);
+            return dec.text; 
+        }
+        return m.text;
+    });
     let markov = new MarkovGen({
         input: input
     });
