@@ -20,7 +20,7 @@ This bot reads messages from a group and periodically speaks generating random m
 
 Configure the environment variables in the .env file. You'll need a Telegram API key. You can easily generate it with the Telegram BotFather bot ([@bot](https://telegram.me/bot)).
 
-After correctly configuring the eoken, the database URL and the encryption key, you can run the bot 
+After correctly configuring the token, the database URL and the encryption key, you can run the bot 
 
 ```sh
 npm install # Just the first time
@@ -32,7 +32,8 @@ npm start
 To try it out, you can add the [bot](https://telegram.me/iammartebot) to any of your Telegram groups!
 
 ## Release History
-
+* 0.1.2
+    * ADD event on @botusername message
 * 0.1.1
     * ADD: encryption. Messages in the database are encrypted. Just the bot can read the content of the learnt messages
 * 0.1.0
