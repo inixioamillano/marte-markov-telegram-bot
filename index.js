@@ -65,7 +65,6 @@ const sendMarkovMessage = (chatId) => {
         bot.sendMessage(chatId, text);
     })
     .catch(e => {
-        console.log(e);
         bot.sendMessage(chatId, 'Sorry, I need to learn more');
     });
 }
@@ -126,11 +125,21 @@ bot.onText(/^Yes$|^No$/, async (msg, match) => {
     }
 })
 
-bot.onText(/\/help/, async (msg, match) => {
-    bot.sendMessage(msg.chat.id, `I'm MarTe, I was created by @inixiodev. I'm pretty young (I'm ${pjson.version} versions old).` 
-        + ` I live in a Raspb...\n\nOh, okay... You're worried about your privacy, right?`
-        + ` I store messages in a database with no information about the author. Your messages are safely stored.\n\n`
-        + `You can delete all the messages stored from this group with the /delete command`);
+bot.onText(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), async (msg, match) => {
+    if (!msg.text.startsWith('/')) {
+        generateMarkovMessage(msg.chat.id)
+        .then((message) => {
+            bot.sendMessage(msg.chat.id, message, {
+                reply_to_message_id: msg.message_id
+            });
+        })
+        .catch(e => {
+            bot.sendMessage(msg.chat.id, 'Sorry, I need to learn more', {
+                reply_to_message_id: msg.message_id
+            });
+        })
+    }
 });
+
 
 bot.on('polling_error', (e) => console.log(e))
