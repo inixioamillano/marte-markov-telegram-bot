@@ -16,6 +16,7 @@ This bot reads messages from a group and periodically speaks generating random m
 [![Generic badge](https://img.shields.io/badge/BotUp-Yes-green.svg)](https://telegram.me/iammartebot/)
 
 </div>
+
 ## Launch
 
 Configure the environment variables in the .env file. You'll need a Telegram API key. You can easily generate it with the Telegram BotFather bot ([@bot](https://telegram.me/bot)).
