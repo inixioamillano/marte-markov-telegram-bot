@@ -50,6 +50,12 @@ npm start
 
 To try it out, you can add the [bot](https://telegram.me/iammartebot) to any of your Telegram groups!
 
+## Roadmap
+
+In future releases, MarTe will allow you to export all the knowledge from a group in a file and import it in another group. 
+
+(Approx. air date: February 9, 2021)
+
 ## Release History
 * 0.1.2
     * ADD: event on @botusername message
