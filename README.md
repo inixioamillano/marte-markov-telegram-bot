@@ -17,6 +17,24 @@ This bot reads messages from a group and periodically speaks generating random m
 
 </div>
 
+<div align="center">
+
+[![GitHub contributors](https://img.shields.io/github/contributors/inixioamillano/marte-markov-telegram-bot.svg)](https://github.com/inixioamillano/marte-markov-telegram-bot/graphs/contributors/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/inixioamillano/marte-markov-telegram-bot/pulls)
+[![GitHub pull-requests](https://img.shields.io/github/issues-pr/inixioamillano/marte-markov-telegram-bot.svg)](https://GitHub.com/inixioamillano/marte-markov-telegram-bot/pull/)
+[![GitHub pull-requests](https://img.shields.io/github/issues-pr-closed/inixioamillano/marte-markov-telegram-bot.svg)](https://GitHub.com/inixioamillano/marte-markov-telegram-bot/pull/)
+</div>
+
+
+<div align="center">
+
+![Uses Node Js](https://img.shields.io/badge/node.js%20-%2343853D.svg?&label=Uses&style=for-the-badge&logo=node.js)
+![Running on my RaspberryPi](https://img.shields.io/badge/-Raspberry%20Pi-C51A4A?style=for-the-badge&logo=Raspberry-Pi&label=Running%20on%20my)
+[![Try this bot on Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white&label=Try%20this%20bot%20on)](https://t.me/IamMarTeBot)
+[![Buy me a coffe at Ko-Fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&label=Buy%20me%20a%20coffe%20at)](https://ko-fi.com/inixiodev)
+
+</div>
+
 ## Launch
 
 Configure the environment variables in the .env file. You'll need a Telegram API key. You can easily generate it with the Telegram BotFather bot ([@bot](https://telegram.me/bot)).
@@ -49,6 +67,12 @@ Distributed under the ISC license. See ``LICENSE`` for more information.
 [https://github.com/inixioamillano/marte-markov-telegram-bot](https://github.com/inixioamillano/marte-markov-telegram-bot)
 
 ## Contibutors
+
+<a href="https://github.com/inixioamillano/marte-markov-telegram-bot/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=inixioamillano/marte-markov-telegram-bot" />
+</a>
+
+Made with [contributors-img](https://contrib.rocks).
 
 * [Lázaro Amor](https://github.com/lazaropower) - Logo creator
 
