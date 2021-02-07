@@ -11,7 +11,7 @@ This bot reads messages from a group and periodically speaks generating random m
 </div>
 <div align="center">
 
-[![Generic badge](https://img.shields.io/badge/Version-0.1.1-green.svg)]()
+[![Generic badge](https://img.shields.io/badge/Version-0.1.2-green.svg)]()
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-Yes-green.svg)](https://github.com/inixioamillano/marte-markov-telegram-bot/graphs/commit-activity)
 [![Generic badge](https://img.shields.io/badge/BotUp-Yes-green.svg)](https://telegram.me/iammartebot/)
 
