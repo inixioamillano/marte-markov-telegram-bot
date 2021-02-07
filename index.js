@@ -25,6 +25,9 @@ bot.setMyCommands([
     },{
         command: '/delete',
         description: 'Forget all the messages learnt from this group'
+    },{
+        command: '/fixme',
+        description: 'Use this command if I stop sending automatic messages'
     }
 ])
 
@@ -46,11 +49,6 @@ const Message = new mongoose.model('Message', MessageSchema);
 const generateMarkovMessage = async (chatId) => {
     const messages = await Message.find({chatId});
     const input = messages.map(m => {
-        // First messages were stored without encryption. Since v0.1.1 all the messages are securely stored
-        if(m.__enc_text){
-            const dec = fieldEncryption.decryptFieldsSync(m, ["text"], process.env.ENCRYPT_KEY);
-            return dec.text; 
-        }
         return m.text;
     });
     let markov = new MarkovGen({
@@ -70,7 +68,7 @@ const sendMarkovMessage = (chatId) => {
 }
 
 bot.on('message', (msg) => {
-    if (msg.text && !msg.text.startsWith('/')){
+    if (msg.text && !msg.text.startsWith('/') && !isRemoveOption(msg)){
         Message.create({
             text: msg.text,
             chatId: msg.chat.id
@@ -103,9 +101,13 @@ bot.onText(/\/delete/, async (msg, match) => {
     })
 })
 
+const isRemoveOption = (msg) => {
+    return msg.reply_to_message && msg.reply_to_message.from.username === process.env.TELEGRAM_BOT_USER 
+    && msg.reply_to_message.text === 'Are you sure you want to delete all the learnt messages?';
+}
+
 bot.onText(/^Yes$|^No$/, async (msg, match) => {
-    if (msg.reply_to_message && msg.reply_to_message.from.username === process.env.TELEGRAM_BOT_USER 
-        && msg.reply_to_message.text === 'Are you sure you want to delete all the learnt messages?'){
+    if (isRemoveOption(msg)){
         if (msg.text === 'Yes'){
             const deleted = await Message.deleteMany({chatId: msg.chat.id});
             bot.sendMessage(msg.chat.id, 
@@ -137,7 +139,7 @@ bot.onText(/\/help/, async (msg, match) => {
 });
 
 bot.onText(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), async (msg, match) => {
-    if (!msg.text.startsWith('/')) {
+    if (!msg.text.startsWith('/') && !isRemoveOption(msg)) {
         generateMarkovMessage(msg.chat.id)
         .then((message) => {
             bot.sendMessage(msg.chat.id, message, {
@@ -152,5 +154,9 @@ bot.onText(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), async (msg, mat
     }
 });
 
+bot.onText(/\/fixme/, (msg, match) => {
+    bot.sendMessage(msg.chat.id, 'Delete me from this group and add me again.'
+        + ' I\'ll remember every message I learnt');
+})
 
 bot.on('polling_error', (e) => console.log(e))
