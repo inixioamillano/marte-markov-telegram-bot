@@ -61,7 +61,7 @@ const generateMarkovMessage = async (chatId) => {
     });
     let markov = new MarkovGen({
         input: input,
-        minLength: 4
+        minLength: Math.floor(Math.random() * 10) + 4
     });
     return markov.makeChain();
 }
