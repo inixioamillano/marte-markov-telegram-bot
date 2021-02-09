@@ -28,6 +28,9 @@ bot.setMyCommands([
     },{
         command: '/fixme',
         description: 'Use this command if I stop sending automatic messages'
+    },{
+        command: '/setfrequency',
+        description: 'Set the talking frequency (default: once every 10 learnt messages)'
     }
 ])
 
@@ -45,6 +48,11 @@ const MessageSchema = new mongoose.Schema({
 MessageSchema.plugin(mongooseFieldEncryption, { fields: ["text"], secret: process.env.ENCRYPT_KEY });
 
 const Message = new mongoose.model('Message', MessageSchema);
+
+const Config = new mongoose.model('Config', {
+    chatId: Number,
+    frequency: Number
+})
 
 const generateMarkovMessage = async (chatId) => {
     const messages = await Message.find({chatId});
@@ -74,8 +82,9 @@ bot.on('message', (msg) => {
             chatId: msg.chat.id
         }, async (err, message) => {
             if (!err) {
+                const config = await Config.findOne({chatId: message.chatId})
                 const messages = await Message.find({chatId: message.chatId});
-                if (messages.length % 10 === 0) {
+                if (messages.length % (config ? config.frequency : 10) === 0) {
                     sendMarkovMessage(message.chatId);
                 }
             }
@@ -157,6 +166,27 @@ bot.onText(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), async (msg, mat
 bot.onText(/\/fixme/, (msg, match) => {
     bot.sendMessage(msg.chat.id, 'Delete me from this group and add me again.'
         + ' I\'ll remember every message I learnt');
+});
+
+bot.onText(/\/setfrequency/, async (msg, match) => {
+    const param = match.input.split(/\s+/)[1];
+    const config = await Config.findOne({chatId: msg.chat.id});
+    if (!param){
+        bot.sendMessage(msg.chat.id, `Frequency is set to ${config ? config.frequency : 10}`);
+    } else {
+        if (!isNaN(param) && param > 0){
+            Config.update({chatId: msg.chat.id}, {$set: {frequency: param}}, {upsert: true}, (err, config) => {
+                if (!err) {
+                    bot.sendMessage(msg.chat.id, `Frequency set to ${param}`);
+                } else {
+                    bot.sendMessage(msg.chat.id, 'Please, try again later');
+                }
+            })
+        } else {
+            bot.sendMessage(msg.chat.id, `Invalid param. Send /frequency <frequency in messages>`);
+        }
+        
+    }
 })
 
 bot.on('polling_error', (e) => console.log(e))

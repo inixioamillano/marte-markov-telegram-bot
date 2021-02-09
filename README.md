@@ -31,7 +31,6 @@ This bot reads messages from a group and periodically speaks generating random m
 ![Uses Node Js](https://img.shields.io/badge/node.js%20-%2343853D.svg?&label=Uses&style=for-the-badge&logo=node.js)
 ![Running on my RaspberryPi](https://img.shields.io/badge/-Raspberry%20Pi-C51A4A?style=for-the-badge&logo=Raspberry-Pi&label=Running%20on%20my)
 [![Try this bot on Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white&label=Try%20this%20bot%20on)](https://t.me/IamMarTeBot)
-[![Buy me a coffe at Ko-Fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&label=Buy%20me%20a%20coffe%20at)](https://ko-fi.com/inixiodev)
 
 </div>
 
@@ -67,6 +66,8 @@ In future releases, MarTe will allow you to export all the knowledge from a grou
 ## About me
 
 Inixio Amillano Casteig – Twitter: [@inixiodev](https://twitter.com/inixiodev) – [Web Page](https://www.inixio.dev) - inixio.amillano@inixio.dev
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V43E9M0)
 
 Distributed under the ISC license. See ``LICENSE`` for more information.
 
