@@ -51,11 +51,11 @@ To try it out, you can add the [bot](https://telegram.me/iammartebot) to any of 
 
 ## Roadmap
 
-In future releases, MarTe will allow you to export all the knowledge from a group in a file and import it in another group. 
-
-(Approx. air date: February 9, 2021)
+In future releases, MarTe will allow you to export all the knowledge from a group in a file and import it in another group.
 
 ## Release History
+* 0.1.3
+    * ADD: Stickers support
 * 0.1.2
     * ADD: event on @botusername message
 * 0.1.1

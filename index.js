@@ -31,6 +31,9 @@ bot.setMyCommands([
     },{
         command: '/setfrequency',
         description: 'Set the talking frequency (default: once every 10 learnt messages)'
+    },{
+        command: '/sendsticker',
+        description: 'I send a sticker'
     }
 ])
 
@@ -54,6 +57,12 @@ const Config = new mongoose.model('Config', {
     frequency: Number
 })
 
+const Sticker = new mongoose.model('Sticker', {
+    chatId: Number,
+    file_id: String,
+    count: Number
+})
+
 const generateMarkovMessage = async (chatId) => {
     const messages = await Message.find({chatId});
     const input = messages.map(m => {
@@ -61,9 +70,9 @@ const generateMarkovMessage = async (chatId) => {
     });
     let markov = new MarkovGen({
         input: input,
-        minLength: Math.floor(Math.random() * 10) + 4
+        minLength: 4
     });
-    return markov.makeChain();
+    return markov.makeChain().replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), '');
 }
 
 const sendMarkovMessage = (chatId) => {
@@ -76,17 +85,35 @@ const sendMarkovMessage = (chatId) => {
     });
 }
 
+const sendSticker = async (chatId) => {
+    const stickers = await Sticker.find({chatId});
+    if (stickers.length > 0){
+        const rand = Math.floor(Math.random() * stickers.length);
+        bot.sendSticker(chatId, stickers[rand].file_id);
+        return true;
+    }
+    return false;
+}
+
 bot.on('message', (msg) => {
     if (msg.text && !msg.text.startsWith('/') && !isRemoveOption(msg)){
         Message.create({
-            text: msg.text,
+            text: msg.text.replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), ''),
             chatId: msg.chat.id
         }, async (err, message) => {
             if (!err) {
                 const config = await Config.findOne({chatId: message.chatId})
                 const messages = await Message.find({chatId: message.chatId});
                 if (messages.length % (config ? config.frequency : 10) === 0) {
-                    sendMarkovMessage(message.chatId);
+                    const rand = Math.random();
+                    if (rand > 0.15){
+                        sendMarkovMessage(message.chatId);
+                    } else {
+                        const sent = await sendSticker(msg.chat.id);
+                        if (!sent){
+                            sendMarkovMessage(message.chatId);
+                        }
+                    }
                 }
             }
         });
@@ -119,7 +146,8 @@ const isRemoveOption = (msg) => {
 bot.onText(/^Yes$|^No$/, async (msg, match) => {
     if (isRemoveOption(msg)){
         if (msg.text === 'Yes'){
-            const deleted = await Message.deleteMany({chatId: msg.chat.id});
+            let deleted = await Message.deleteMany({chatId: msg.chat.id});
+            deleted = deleted && await Sticker.deleteMany({chatId: msg.chat.id});
             bot.sendMessage(msg.chat.id, 
                 deleted ? 'Messages successfully deleted' : 'Something wnet wrong, try again later', {
                 reply_markup: {
@@ -138,11 +166,13 @@ bot.onText(/^Yes$|^No$/, async (msg, match) => {
 })
 
 bot.onText(/\/help/, async (msg, match) => {
-    bot.sendMessage(msg.chat.id, `I'm MarTe, I was created by @inixiodev. I'm pretty young (I'm ${pjson.version} versions old).` 
+    bot.sendMessage(msg.chat.id, `I'm MarTe, I was created by <a href="https://twitter.com/inixiodev">@inixiodev</a>.`
+        +` I'm pretty young (I'm ${pjson.version} versions old).` 
         + ` I live in a Raspb...\n\nOh, okay... You're worried about your privacy, right?`
         + ` I store messages in a database with no information about the author. Your messages are safely stored.\n\n`
         + `You can delete all the messages stored from this group with the /delete command\n\n`
-        + `You can check my source code <a href="https://github.com/inixioamillano/marte-markov-telegram-bot">here</a>`,
+        + `You can check my source code <a href="https://github.com/inixioamillano/marte-markov-telegram-bot">here</a>`
+        + `\n\nSupport this project buying me a coffe at <a href="https://ko-fi.com/inixiodev/">Ko-Fi</a>`,
     {
         parse_mode: 'HTML'
     });
@@ -187,6 +217,21 @@ bot.onText(/\/setfrequency/, async (msg, match) => {
             bot.sendMessage(msg.chat.id, `Invalid param. Send /frequency <frequency in messages>`);
         }
         
+    }
+});
+
+bot.on('sticker', (msg) => {
+    Sticker.update({chatId: msg.chat.id, file_id: msg.sticker.file_id},
+        {$inc: {count: 1}},
+        {upsert: true}, (err, st) => {
+            console.log(err ? 'Error learning sticker' : 'Sticker learnt');
+        });
+})
+
+bot.onText(/\/sendsticker/, async (msg) => {
+    const sent = await sendSticker(msg.chat.id)
+    if (!sent) {
+        bot.sendMessage(msg.chat.id, 'Sorry, I need to learn stickers first. Please, send me a sticker')
     }
 })
 
