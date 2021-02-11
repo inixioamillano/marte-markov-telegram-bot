@@ -270,16 +270,16 @@ bot.onText(/\/sendsticker/, async (msg) => {
     }
 })
 
-bot.onText(/\/quote/, async (msg, match) => {
-    let author = match.input.replace(/\/quote/, '');
-    if (!author){
+bot.onText(/^\/quote/, async (msg, match) => {
+    let author = match.input.replace(/^\/quote/, '');
+    if (!author || author === `@${process.env.TELEGRAM_BOT_USER}`){
         bot.sendMessage(msg.chat.id, 'Please, write /quote <author> to generate a quote\n\n'
             + 'Examples:\n\n/quote Obi-Wan Kenobi\n\n/quote Albert Einstein\n\n/quote @<user in this group>');
     } else {
-        author = author.replace(/\s+/, '');
+        author = author.replace(/\s+/, '');    
+        const message = await generateMarkovMessage(msg.chat.id);
+        bot.sendMessage(msg.chat.id, `"${message}"\n\n-${author}`)
     }
-    const message = await generateMarkovMessage(msg.chat.id);
-    bot.sendMessage(msg.chat.id, `"${message}"\n\n-${author}`)
 })
 
 bot.onText(/\/commands/, (msg, match) => {
