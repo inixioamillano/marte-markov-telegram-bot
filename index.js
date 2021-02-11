@@ -34,6 +34,9 @@ bot.setMyCommands([
     },{
         command: '/sendsticker',
         description: 'I send a sticker'
+    },{
+        command: '/speech',
+        description: 'Generate speech'
     }
 ])
 
@@ -95,6 +98,19 @@ const sendSticker = async (chatId) => {
     return false;
 }
 
+const generateSpeech = async (chatId, length) => {
+    let speech = '';
+    try{
+        for (let i = 0; i < length; i++){
+            const newPhrase = await generateMarkovMessage(chatId);
+            speech = speech + newPhrase.replace(new RegExp(/\./, 'g'), '') + '. ';
+        }
+        return speech;
+    } catch(e) {
+        return speech.length > 0 ? speech : 'Sorry, I need to learn more'; 
+    }
+}
+
 bot.on('message', (msg) => {
     if (msg.text && !msg.text.startsWith('/') && !isRemoveOption(msg)){
         Message.create({
@@ -123,6 +139,12 @@ bot.on('message', (msg) => {
 bot.onText(/\/talk/, (msg, match) => {
     sendMarkovMessage(msg.chat.id);
 });
+
+bot.onText(/\/speech/, async (msg, match) => {
+    const length = Math.floor(Math.random() * 10);
+    const speech = await generateSpeech(msg.chat.id, length);
+    bot.sendMessage(msg.chat.id, speech);
+})
 
 bot.onText(/\/stats/, async (msg, match) => {
     const messages = await Message.find({chatId: msg.chat.id});
@@ -226,6 +248,11 @@ bot.on('sticker', (msg) => {
         {upsert: true}, (err, st) => {
             console.log(err ? 'Error learning sticker' : 'Sticker learnt');
         });
+})
+
+bot.on('dice', async (msg) => {
+    const speech = await generateSpeech(msg.chat.id, msg.dice.value);
+    bot.sendMessage(msg.chat.id, speech);
 })
 
 bot.onText(/\/sendsticker/, async (msg) => {

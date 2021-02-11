@@ -55,7 +55,7 @@ In future releases, MarTe will allow you to export all the knowledge from a grou
 
 ## Release History
 * 0.1.3
-    * ADD: Stickers support
+    * ADD: Stickers support, Speech generation. On Dice event 
 * 0.1.2
     * ADD: event on @botusername message
 * 0.1.1
