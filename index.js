@@ -10,10 +10,13 @@ console.log(`Hi! I'm MarTe (Markov Telegram) - v${pjson.version}`);
 
 const bot = new TelegramBot(process.env.TOKEN, {polling: true});
 
-bot.setMyCommands([
+const commands = [
     {
         command: '/talk',
         description: 'I talk'
+    },{
+        command: '/commands',
+        description: 'Get commands list'
     },
     {
         command: '/stats',
@@ -41,7 +44,9 @@ bot.setMyCommands([
         command: '/quote',
         description: 'Generate a quote'
     }
-])
+];
+
+bot.setMyCommands(commands);
 
 console.log("Okay, let's see what I've learnt...")
 
@@ -268,14 +273,22 @@ bot.onText(/\/sendsticker/, async (msg) => {
 bot.onText(/\/quote/, async (msg, match) => {
     let author = match.input.replace(/\/quote/, '');
     if (!author){
-        const members = await bot.getChatAdministrators(msg.chat.id);
-        const member = members[Math.floor(Math.random() * members.length)];
-        author = `@${member.user.username}`;
+        bot.sendMessage(msg.chat.id, 'Please, write /quote <author> to generate a quote\n\n'
+            + 'Examples:\n\n/quote Obi-Wan Kenobi\n\n/quote Albert Einstein\n\n/quote @<user in this group>');
     } else {
         author = author.replace(/\s+/, '');
     }
     const message = await generateMarkovMessage(msg.chat.id);
     bot.sendMessage(msg.chat.id, `"${message}"\n\n-${author}`)
+})
+
+bot.onText(/\/commands/, (msg, match) => {
+    let text = `Available commands (v${pjson.version})\n\n`;
+    commands.forEach(c => {
+        text = text + `${c.command} - ${c.description}\n\n`
+    })
+    text = text + 'Try sending me the dice emoji. I\'ll send you a random speech depending on the result of the dice rolled';
+    bot.sendMessage(msg.chat.id, text);
 })
 
 bot.on('polling_error', (e) => console.log(e))
