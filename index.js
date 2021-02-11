@@ -37,6 +37,9 @@ bot.setMyCommands([
     },{
         command: '/speech',
         description: 'Generate speech'
+    },{
+        command: '/quote',
+        description: 'Generate a quote'
     }
 ])
 
@@ -260,6 +263,19 @@ bot.onText(/\/sendsticker/, async (msg) => {
     if (!sent) {
         bot.sendMessage(msg.chat.id, 'Sorry, I need to learn stickers first. Please, send me a sticker')
     }
+})
+
+bot.onText(/\/quote/, async (msg, match) => {
+    let author = match.input.replace(/\/quote/, '');
+    if (!author){
+        const members = await bot.getChatAdministrators(msg.chat.id);
+        const member = members[Math.floor(Math.random() * members.length)];
+        author = `@${member.user.username}`;
+    } else {
+        author = author.replace(/\s+/, '');
+    }
+    const message = await generateMarkovMessage(msg.chat.id);
+    bot.sendMessage(msg.chat.id, `"${message}"\n\n-${author}`)
 })
 
 bot.on('polling_error', (e) => console.log(e))
