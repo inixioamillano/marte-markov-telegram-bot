@@ -128,14 +128,18 @@ bot.on('message', (msg) => {
             if (!err) {
                 const config = await Config.findOne({chatId: message.chatId})
                 const messages = await Message.find({chatId: message.chatId});
-                if (messages.length % (config ? config.frequency : 10) === 0) {
-                    const rand = Math.random();
-                    if (rand > 0.15){
-                        sendMarkovMessage(message.chatId);
-                    } else {
-                        const sent = await sendSticker(msg.chat.id);
-                        if (!sent){
+                if (messages.length === 666){
+                    bot.sendMessage(message.chatId, 'I\'ve learnt 666 messages 😈')
+                } else {
+                    if (messages.length % (config ? config.frequency : 10) === 0) {
+                        const rand = Math.random();
+                        if (rand > 0.15){
                             sendMarkovMessage(message.chatId);
+                        } else {
+                            const sent = await sendSticker(msg.chat.id);
+                            if (!sent){
+                                sendMarkovMessage(message.chatId);
+                            }
                         }
                     }
                 }
