@@ -304,15 +304,6 @@ bot.onText(/\/contribute/, (msg, match) => {
     bot.sendInvoice(msg.chat.id, 'Support MarTe', 'Help to keep this project alive with a small contribution', 'MarTe', process.env.PAYMENT_TOKEN, null, 'EUR', [{
         label: '1€',
         amount: 100
-    },{
-        label: '2€',
-        amount: 200
-    },{
-        label: '5€',
-        amount: 500
-    },{
-        label: '10€',
-        amount: 1000
     }])
 })
 
