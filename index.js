@@ -302,7 +302,7 @@ bot.onText(/\/commands/, (msg, match) => {
 
 bot.onText(/\/contribute/, (msg, match) => {
     bot.sendInvoice(msg.chat.id, 'Support MarTe', 'Help to keep this project alive with a small contribution', 'MarTe', process.env.PAYMENT_TOKEN, null, 'EUR', [{
-        label: '1€',
+        label: 'MarTe | Contribution',
         amount: 100
     }])
 })
