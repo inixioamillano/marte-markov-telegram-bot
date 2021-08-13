@@ -19,6 +19,10 @@ const commands = [
         description: 'Get commands list'
     },
     {
+        command: '/contribute',
+        description: 'Contribute to this project with a small contribution'
+    },
+    {
         command: '/stats',
         description: 'I send you the number of learnt messages'
     },
@@ -294,6 +298,22 @@ bot.onText(/\/commands/, (msg, match) => {
     })
     text = text + 'Try sending me the dice emoji. I\'ll send you a random speech depending on the result of the dice rolled';
     bot.sendMessage(msg.chat.id, text);
+})
+
+bot.onText(/\/contribute/, (msg, match) => {
+    bot.sendInvoice(msg.chat.id, 'Support MarTe', 'Help to keep this project alive with a small contribution', 'MarTe', process.env.PAYMENT_TOKEN, null, 'EUR', [{
+        label: '1€',
+        amount: 1
+    },{
+        label: '2€',
+        amount: 2
+    },{
+        label: '5€',
+        amount: 5
+    },{
+        label: '10€',
+        amount: 10
+    }])
 })
 
 bot.on('polling_error', (e) => console.log(e))
