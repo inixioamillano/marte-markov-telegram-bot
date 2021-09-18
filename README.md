@@ -54,6 +54,8 @@ To try it out, you can add the [bot](https://telegram.me/iammartebot) to any of 
 In future releases, MarTe will allow you to export all the knowledge from a group in a file and import it in another group.
 
 ## Release History
+* 0.2.0
+    * ADD: Voice messages with the /audio command 
 * 0.1.3
     * ADD: Stickers support, Speech generation. On Dice event 
 * 0.1.2
