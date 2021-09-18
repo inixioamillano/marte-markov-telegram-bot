@@ -117,7 +117,7 @@ const sendMarkovMessageAsAudio = (chatId, msgId) => {
                 bot.sendMessage(chatId, 'Sorry, something went wrong. Please, try again the command /audio');
                 return;
             }
-            bot.sendAudio(chatId, path)
+            bot.sendAudio(chatId, path, {title: 'MarTe'})
                 .catch(err => {
                     bot.sendMessage(chatId, 'Sorry, something went wrong. Please, try again the command /audio');
                 })
