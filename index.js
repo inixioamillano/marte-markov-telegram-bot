@@ -3,6 +3,8 @@ const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
 const mongooseFieldEncryption = require("mongoose-field-encryption").fieldEncryption;
 var pjson = require('./package.json');
+const gTTS = require('gtts');
+const fs = require('fs');
 
 require('dotenv').config();
 
@@ -14,7 +16,12 @@ const commands = [
     {
         command: '/talk',
         description: 'I talk'
-    },{
+    },
+    {
+        command: '/audio',
+        description: 'I send you a voice message'
+    },
+    {
         command: '/commands',
         description: 'Get commands list'
     },
@@ -100,6 +107,32 @@ const sendMarkovMessage = (chatId) => {
     });
 }
 
+const sendMarkovMessageAsAudio = (chatId, msgId) => {
+    generateMarkovMessage(chatId)
+    .then(text => {
+        var gtts = new gTTS(text, 'es');
+        const path = `audios/MarTe ${chatId}-${msgId}.mp3`;
+        gtts.save(path, function (err, result){
+            if(err) {
+                bot.sendMessage(chatId, 'Sorry, something went wrong. Please, try again the command /audio');
+                return;
+            }
+            bot.sendAudio(chatId, path)
+                .catch(err => {
+                    bot.sendMessage(chatId, 'Sorry, something went wrong. Please, try again the command /audio');
+                })
+                .finally(() => {
+                    fs.unlink(path, () => {
+                        return;
+                    });
+                });
+        });
+    })
+    .catch(e => {
+        bot.sendMessage(chatId, 'Sorry, I need to learn more');
+    });
+}
+
 const sendSticker = async (chatId) => {
     const stickers = await Sticker.find({chatId});
     if (stickers.length > 0){
@@ -154,6 +187,10 @@ bot.on('message', (msg) => {
 
 bot.onText(/\/talk/, (msg, match) => {
     sendMarkovMessage(msg.chat.id);
+});
+
+bot.onText(/\/audio/, (msg, match) => {
+    sendMarkovMessageAsAudio(msg.chat.id, msg.message_id);
 });
 
 bot.onText(/\/speech/, async (msg, match) => {
