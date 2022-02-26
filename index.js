@@ -54,6 +54,9 @@ const commands = [
     },{
         command: '/quote',
         description: 'Generate a quote'
+    }, {
+        command: '/learn',
+        description: 'Learns a .txt file'
     }
 ];
 
@@ -327,6 +330,96 @@ bot.onText(/^\/quote/, async (msg, match) => {
         bot.sendMessage(msg.chat.id, `"${message}"\n\n-${author}`)
     }
 })
+
+bot.onText(/^\/learn/, async (msg, match) => {
+    const chatId = msg.chat.id;
+
+    if (!msg.reply_to_message) {
+        bot.sendMessage(chatId, 'You have to quote a .txt sent file or send me one');
+        return;
+    }
+
+    const document = msg.reply_to_message.document;
+
+    if (document) {
+        if (!isTxtFile(document)) {
+            bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt format.');
+            return;
+        }
+        askToLearnMessage(msg.reply_to_message);
+    }
+})
+
+bot.on('document', async (msg) => {
+    if (!isTxtFile(msg.document)) {
+        bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt format.');
+        return;
+    }
+    askToLearnMessage(msg);
+});
+
+bot.on('callback_query', (query) => {
+    const chatId = query.message.chat.id;
+    switch (query.data) {
+        case 'data1':
+            bot.sendMessage(chatId, 'Alright, learning...');
+            learnText(chatId, query.message.reply_to_message.document)
+            break;
+        case 'data2':
+            bot.sendMessage(chatId, 'Okay, maybe next time.');
+            break;
+        default:
+            break;
+    }
+    // Remove inline keyboard
+    bot.deleteMessage(chatId, query.message.message_id);
+});
+
+const learnText = (chatId, document) => {
+    const stream = bot.getFileStream(document.file_id);
+    stream.on('data', (data) => {
+        const chunk = data.toString();
+        const result = chunk.match(/[^.?!]+[.!?]+[\])'"`’”]*/g);
+        result.forEach(element => {
+            Message.create({
+                text: element.replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), ''),
+                chatId: chatId
+            });
+        });
+    });
+    bot.sendMessage(chatId, 'I have learned the text!');
+}
+
+const isTxtFile = (document) => {
+    const extension = document.file_name.split('.').pop();
+    if (extension !== 'txt')
+        return false;
+    return true;
+}
+
+const askToLearnMessage = (msg) => {
+    const options = {
+        'reply_to_message_id': msg.message_id,
+        'reply_markup': {
+            'inline_keyboard': [
+                [
+                    {
+                        text: 'Yes',
+                        callback_data: 'data1'
+                    }
+                ],
+                [
+                    {
+                        text: 'No',
+                        callback_data: 'data2'
+                    }
+                ],
+            ]
+        }
+    }
+
+    bot.sendMessage(msg.chat.id, 'Should I learn this text?', options);
+}
 
 bot.onText(/\/commands/, (msg, match) => {
     let text = `Available commands (v${pjson.version})\n\n`;
