@@ -1,13 +1,14 @@
-const MarkovGen = require('markov-generator');
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
 const mongooseFieldEncryption = require("mongoose-field-encryption").fieldEncryption;
 var pjson = require('./package.json');
 const gTTS = require('gtts');
 const fs = require('fs');
+const workerpool = require('workerpool');
+const connectAndGetSchema  = require('./mongo-connector');
 
 require('dotenv').config();
-
+const pool = workerpool.pool(__dirname + '/markov-generator.js');
 console.log(`Hi! I'm MarTe (Markov Telegram) - v${pjson.version}`);
 
 const bot = new TelegramBot(process.env.TOKEN, {polling: true});
@@ -62,18 +63,7 @@ const commands = [
 
 bot.setMyCommands(commands);
 
-console.log("Okay, let's see what I've learnt...")
-
-mongoose.connect(`mongodb://${process.env.DB_HOST}:27017/martebot`, {useNewUrlParser: true, useUnifiedTopology: true})
-.then(() => console.log("Interesting..."))
-.catch(() => console.log("Whoops... Something went wrong..."));
-
-const MessageSchema = new mongoose.Schema({ 
-    text: String, 
-    chatId: Number 
-});
-
-MessageSchema.plugin(mongooseFieldEncryption, { fields: ["text"], secret: process.env.ENCRYPT_KEY });
+const MessageSchema = connectAndGetSchema();
 
 const Message = new mongoose.model('Message', MessageSchema);
 
@@ -89,15 +79,8 @@ const Sticker = new mongoose.model('Sticker', {
 })
 
 const generateMarkovMessage = async (chatId) => {
-    const messages = await Message.find({chatId});
-    const input = messages.map(m => {
-        return m.text;
-    });
-    let markov = new MarkovGen({
-        input: input,
-        minLength: 4
-    });
-    return markov.makeChain().replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), '');
+    markovResult = await pool.exec('markov', [chatId]);
+    return markovResult.replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), '');
 }
 
 const sendMarkovMessage = (chatId) => {
