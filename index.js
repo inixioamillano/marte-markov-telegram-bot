@@ -160,7 +160,8 @@ const generateSpeech = async (chatId, length) => {
 }
 
 bot.on('message', (msg) => {
-    if (msg.text && !msg.text.startsWith('/') && !isRemoveOption(msg)){
+    if (msg.text && !msg.text.startsWith('/') && !isRemoveOption(msg)
+    && !/^ *(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*) *$/.test(msg.text)){
         Message.create({
             text: msg.text.replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), ''),
             chatId: msg.chat.id
