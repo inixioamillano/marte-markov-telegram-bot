@@ -159,6 +159,16 @@ const generateSpeech = async (chatId, length) => {
     }
 }
 
+const onCommand = async (regex, callback) => {
+    const namedCommandRegex = /\/\w+@/;
+    const namedToMeCommandRegex = new RegExp('\\/\\w+@' + process.env.TELEGRAM_BOT_USER);
+    bot.onText(regex, (msg) => {
+        if (msg.text.match(namedCommandRegex).length === 0 || msg.text.match(namedToMeCommandRegex).length > 0) {
+            callback(msg);
+        }
+    });
+}
+
 bot.on('message', (msg) => {
     if (msg.text && !msg.text.startsWith('/') && !isRemoveOption(msg)){
         Message.create({
@@ -188,26 +198,26 @@ bot.on('message', (msg) => {
     }
 })
 
-bot.onText(/\/talk/, (msg, match) => {
+onCommand(/\/talk/, (msg, match) => {
     sendMarkovMessage(msg.chat.id);
 });
 
-bot.onText(/\/audio/, (msg, match) => {
+onCommand(/\/audio/, (msg, match) => {
     sendMarkovMessageAsAudio(msg.chat.id, msg.message_id);
 });
 
-bot.onText(/\/speech/, async (msg, match) => {
+onCommand(/\/speech/, async (msg, match) => {
     const length = Math.floor(Math.random() * 10);
     const speech = await generateSpeech(msg.chat.id, length);
     bot.sendMessage(msg.chat.id, speech);
 })
 
-bot.onText(/\/stats/, async (msg, match) => {
+onCommand(/\/stats/, async (msg, match) => {
     const messages = await Message.find({chatId: msg.chat.id});
     bot.sendMessage(msg.chat.id, `I've learnt ${messages.length} messages`);
 });
 
-bot.onText(/\/delete/, async (msg, match) => {
+onCommand(/\/delete/, async (msg, match) => {
     bot.sendMessage(msg.chat.id, 'Are you sure you want to delete all the learnt messages?', {
         reply_markup: {
             keyboard: [["Yes"], ["No"]],
@@ -221,7 +231,7 @@ const isRemoveOption = (msg) => {
     && msg.reply_to_message.text === 'Are you sure you want to delete all the learnt messages?';
 }
 
-bot.onText(/^Yes$|^No$/, async (msg, match) => {
+onCommand(/^Yes$|^No$/, async (msg, match) => {
     if (isRemoveOption(msg)){
         if (msg.text === 'Yes'){
             let deleted = await Message.deleteMany({chatId: msg.chat.id});
@@ -243,7 +253,7 @@ bot.onText(/^Yes$|^No$/, async (msg, match) => {
     }
 })
 
-bot.onText(/\/help/, async (msg, match) => {
+onCommand(/\/help/, async (msg, match) => {
     bot.sendMessage(msg.chat.id, `I'm MarTe, I was created by <a href="https://twitter.com/inixiodev">@inixiodev</a>.`
         +` I'm pretty young (I'm ${pjson.version} versions old).` 
         + ` I live in a Raspb...\n\nOh, okay... You're worried about your privacy, right?`
@@ -272,12 +282,12 @@ bot.onText(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), async (msg, mat
     }
 });
 
-bot.onText(/\/fixme/, (msg, match) => {
+onCommand(/\/fixme/, (msg, match) => {
     bot.sendMessage(msg.chat.id, 'Delete me from this group and add me again.'
         + ' I\'ll remember every message I learnt');
 });
 
-bot.onText(/\/setfrequency/, async (msg, match) => {
+onCommand(/\/setfrequency/, async (msg, match) => {
     const param = match.input.split(/\s+/)[1];
     const config = await Config.findOne({chatId: msg.chat.id});
     if (!param){
@@ -311,14 +321,14 @@ bot.on('dice', async (msg) => {
     bot.sendMessage(msg.chat.id, speech);
 })
 
-bot.onText(/\/sendsticker/, async (msg) => {
+onCommand(/\/sendsticker/, async (msg) => {
     const sent = await sendSticker(msg.chat.id)
     if (!sent) {
         bot.sendMessage(msg.chat.id, 'Sorry, I need to learn stickers first. Please, send me a sticker')
     }
 })
 
-bot.onText(/^\/quote/, async (msg, match) => {
+onCommand(/^\/quote/, async (msg, match) => {
     let author = match.input.replace(/^\/quote/, '');
     author = author.replace(`@${process.env.TELEGRAM_BOT_USER}`, '');
     if (!author){
@@ -331,7 +341,7 @@ bot.onText(/^\/quote/, async (msg, match) => {
     }
 })
 
-bot.onText(/^\/learn/, async (msg, match) => {
+onCommand(/^\/learn/, async (msg, match) => {
     const chatId = msg.chat.id;
 
     if (!msg.reply_to_message) {
@@ -421,7 +431,7 @@ const askToLearnMessage = (msg) => {
     bot.sendMessage(msg.chat.id, 'Should I learn this text?', options);
 }
 
-bot.onText(/\/commands/, (msg, match) => {
+onCommand(/\/commands/, (msg, match) => {
     let text = `Available commands (v${pjson.version})\n\n`;
     commands.forEach(c => {
         text = text + `${c.command} - ${c.description}\n\n`
@@ -430,7 +440,7 @@ bot.onText(/\/commands/, (msg, match) => {
     bot.sendMessage(msg.chat.id, text);
 })
 
-bot.onText(/\/contribute/, (msg, match) => {
+onCommand(/\/contribute/, (msg, match) => {
     bot.sendInvoice(msg.chat.id, 'Support MarTe', 'Help to keep this project alive with a small contribution', 'MarTe', process.env.PAYMENT_TOKEN, null, 'EUR', [{
         label: 'MarTe | Contribution',
         amount: 100
