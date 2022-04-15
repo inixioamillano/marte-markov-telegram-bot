@@ -163,7 +163,7 @@ const onCommand = async (regex, callback) => {
     const namedCommandRegex = /\/\w+@/;
     const namedToMeCommandRegex = new RegExp('\\/\\w+@' + process.env.TELEGRAM_BOT_USER);
     bot.onText(regex, (msg) => {
-        if (msg.text.match(namedCommandRegex).length === 0 || msg.text.match(namedToMeCommandRegex).length > 0) {
+        if (msg.text.match(namedCommandRegex) == null || msg.text.match(namedToMeCommandRegex) != null) {
             callback(msg);
         }
     });
