@@ -56,7 +56,10 @@ const commands = [
         description: 'Generate a quote'
     }, {
         command: '/learn',
-        description: 'Learns a .txt file'
+        description: 'Learns a .txt file or a .json backup'
+    }, {
+        command: '/backup',
+        description: 'Provides a .json file with the chat\'s history'
     }
 ];
 
@@ -159,6 +162,16 @@ const generateSpeech = async (chatId, length) => {
     }
 }
 
+const onCommand = async (regex, callback) => {
+    const namedCommandRegex = /\/\w+@/;
+    const namedToMeCommandRegex = new RegExp('\\/\\w+@' + process.env.TELEGRAM_BOT_USER);
+    bot.onText(regex, (msg) => {
+        if (msg.text.match(namedCommandRegex) == null || msg.text.match(namedToMeCommandRegex) != null) {
+            callback(msg);
+        }
+    });
+}
+
 bot.on('message', (msg) => {
     if (msg.text && !msg.text.startsWith('/') && !isRemoveOption(msg)){
         Message.create({
@@ -188,26 +201,26 @@ bot.on('message', (msg) => {
     }
 })
 
-bot.onText(/\/talk/, (msg, match) => {
+onCommand(/\/talk/, (msg, match) => {
     sendMarkovMessage(msg.chat.id);
 });
 
-bot.onText(/\/audio/, (msg, match) => {
+onCommand(/\/audio/, (msg, match) => {
     sendMarkovMessageAsAudio(msg.chat.id, msg.message_id);
 });
 
-bot.onText(/\/speech/, async (msg, match) => {
+onCommand(/\/speech/, async (msg, match) => {
     const length = Math.floor(Math.random() * 10);
     const speech = await generateSpeech(msg.chat.id, length);
     bot.sendMessage(msg.chat.id, speech);
 })
 
-bot.onText(/\/stats/, async (msg, match) => {
+onCommand(/\/stats/, async (msg, match) => {
     const messages = await Message.find({chatId: msg.chat.id});
     bot.sendMessage(msg.chat.id, `I've learnt ${messages.length} messages`);
 });
 
-bot.onText(/\/delete/, async (msg, match) => {
+onCommand(/\/delete/, async (msg, match) => {
     bot.sendMessage(msg.chat.id, 'Are you sure you want to delete all the learnt messages?', {
         reply_markup: {
             keyboard: [["Yes"], ["No"]],
@@ -221,7 +234,7 @@ const isRemoveOption = (msg) => {
     && msg.reply_to_message.text === 'Are you sure you want to delete all the learnt messages?';
 }
 
-bot.onText(/^Yes$|^No$/, async (msg, match) => {
+onCommand(/^Yes$|^No$/, async (msg, match) => {
     if (isRemoveOption(msg)){
         if (msg.text === 'Yes'){
             let deleted = await Message.deleteMany({chatId: msg.chat.id});
@@ -243,7 +256,7 @@ bot.onText(/^Yes$|^No$/, async (msg, match) => {
     }
 })
 
-bot.onText(/\/help/, async (msg, match) => {
+onCommand(/\/help/, async (msg, match) => {
     bot.sendMessage(msg.chat.id, `I'm MarTe, I was created by <a href="https://twitter.com/inixiodev">@inixiodev</a>.`
         +` I'm pretty young (I'm ${pjson.version} versions old).` 
         + ` I live in a Raspb...\n\nOh, okay... You're worried about your privacy, right?`
@@ -272,12 +285,12 @@ bot.onText(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), async (msg, mat
     }
 });
 
-bot.onText(/\/fixme/, (msg, match) => {
+onCommand(/\/fixme/, (msg, match) => {
     bot.sendMessage(msg.chat.id, 'Delete me from this group and add me again.'
         + ' I\'ll remember every message I learnt');
 });
 
-bot.onText(/\/setfrequency/, async (msg, match) => {
+onCommand(/\/setfrequency/, async (msg, match) => {
     const param = match.input.split(/\s+/)[1];
     const config = await Config.findOne({chatId: msg.chat.id});
     if (!param){
@@ -311,14 +324,14 @@ bot.on('dice', async (msg) => {
     bot.sendMessage(msg.chat.id, speech);
 })
 
-bot.onText(/\/sendsticker/, async (msg) => {
+onCommand(/\/sendsticker/, async (msg) => {
     const sent = await sendSticker(msg.chat.id)
     if (!sent) {
         bot.sendMessage(msg.chat.id, 'Sorry, I need to learn stickers first. Please, send me a sticker')
     }
 })
 
-bot.onText(/^\/quote/, async (msg, match) => {
+onCommand(/^\/quote/, async (msg, match) => {
     let author = match.input.replace(/^\/quote/, '');
     author = author.replace(`@${process.env.TELEGRAM_BOT_USER}`, '');
     if (!author){
@@ -331,19 +344,19 @@ bot.onText(/^\/quote/, async (msg, match) => {
     }
 })
 
-bot.onText(/^\/learn/, async (msg, match) => {
+onCommand(/^\/learn/, async (msg, match) => {
     const chatId = msg.chat.id;
 
     if (!msg.reply_to_message) {
-        bot.sendMessage(chatId, 'You have to quote a .txt sent file or send me one');
+        bot.sendMessage(chatId, 'You have to quote a .txt or .json sent file or send me one');
         return;
     }
 
     const document = msg.reply_to_message.document;
 
     if (document) {
-        if (!isTxtFile(document)) {
-            bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt format.');
+        if (!isTxtFile(document) && !isJSONFile(document)) {
+            bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt or .json format.');
             return;
         }
         askToLearnMessage(msg.reply_to_message);
@@ -351,28 +364,47 @@ bot.onText(/^\/learn/, async (msg, match) => {
 })
 
 bot.on('document', async (msg) => {
-    if (!isTxtFile(msg.document)) {
-        bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt format.');
+    if (!isTxtFile(msg.document) && !isJSONFile(msg.document)) {
+        bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt or .json format.');
         return;
     }
     askToLearnMessage(msg);
 });
 
-bot.on('callback_query', (query) => {
+bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     switch (query.data) {
         case 'data1':
             bot.sendMessage(chatId, 'Alright, learning...');
-            learnText(chatId, query.message.reply_to_message.document)
+            if (isTxtFile(query.message.reply_to_message.document)) {
+                learnText(chatId, query.message.reply_to_message.document)
+            } else if (isJSONFile(query.message.reply_to_message.document)) {
+                learnJSON(chatId, query.message.reply_to_message.document)
+            }
+            bot.deleteMessage(chatId, query.message.message_id);
             break;
         case 'data2':
             bot.sendMessage(chatId, 'Okay, maybe next time.');
+            bot.deleteMessage(chatId, query.message.message_id);
+            break;
+        case 'data3':
+            const admins = await bot.getChatAdministrators(chatId);
+            if (admins.some(adm => adm.user.id === query.from.id)) {
+                const messages = await Message.find({chatId});
+                const input = messages.map(m => {
+                    return m.text;
+                });
+                bot.sendDocument(chatId, Buffer.from(JSON.stringify(input)), {}, {contentType: 'application/json', filename: 'history.json'});
+                bot.deleteMessage(chatId, query.message.message_id);
+            } else {
+                bot.answerCallbackQuery(query.id, {text: 'Sorry, only admins can make the backups'});
+            }
             break;
         default:
+            bot.deleteMessage(chatId, query.message.message_id);
             break;
     }
     // Remove inline keyboard
-    bot.deleteMessage(chatId, query.message.message_id);
 });
 
 const learnText = (chatId, document) => {
@@ -390,11 +422,61 @@ const learnText = (chatId, document) => {
     bot.sendMessage(chatId, 'I have learned the text!');
 }
 
+const learnJSON = async (chatId, document) => {
+    const stream = bot.getFileStream(document.file_id);
+    stream.on('data', (data) => {
+        try {
+            const str = data.toString();
+            const arr = JSON.parse(str);
+            arr.forEach(element => {
+                Message.create({
+                    text: element.replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), ''),
+                    chatId: chatId
+                });
+            });
+            bot.sendMessage(chatId, 'I have learned the backup!');
+        } catch (e) {
+            bot.sendMessage(chatId, 'Sorry I couldn\'t learnt it. Does it have the right format?');
+        }
+    });
+}
+
 const isTxtFile = (document) => {
     const extension = document.file_name.split('.').pop();
     if (extension !== 'txt')
         return false;
     return true;
+}
+
+const isJSONFile = (document) => {
+    const extension = document.file_name.split('.').pop();
+    if (extension !== 'json')
+        return false;
+    return true;
+}
+
+const askToConfirmBackup = (msg) => {
+    const options = {
+        'reply_to_message_id': msg.message_id,
+        'reply_markup': {
+            'inline_keyboard': [
+                [
+                    {
+                        text: 'Yes',
+                        callback_data: 'data3'
+                    }
+                ],
+                [
+                    {
+                        text: 'No',
+                        callback_data: 'data2'
+                    }
+                ],
+            ]
+        }
+    }
+
+    bot.sendMessage(msg.chat.id, 'Should I upload a backup of the chat\'s history?', options);
 }
 
 const askToLearnMessage = (msg) => {
@@ -421,7 +503,7 @@ const askToLearnMessage = (msg) => {
     bot.sendMessage(msg.chat.id, 'Should I learn this text?', options);
 }
 
-bot.onText(/\/commands/, (msg, match) => {
+onCommand(/\/commands/, (msg, match) => {
     let text = `Available commands (v${pjson.version})\n\n`;
     commands.forEach(c => {
         text = text + `${c.command} - ${c.description}\n\n`
@@ -430,11 +512,21 @@ bot.onText(/\/commands/, (msg, match) => {
     bot.sendMessage(msg.chat.id, text);
 })
 
-bot.onText(/\/contribute/, (msg, match) => {
+onCommand(/\/contribute/, (msg, match) => {
     bot.sendInvoice(msg.chat.id, 'Support MarTe', 'Help to keep this project alive with a small contribution', 'MarTe', process.env.PAYMENT_TOKEN, null, 'EUR', [{
         label: 'MarTe | Contribution',
         amount: 100
     }])
+})
+
+onCommand(/\/backup/, async (msg) => {
+    const chatId = msg.chat.id;
+    const admins = await bot.getChatAdministrators(chatId);
+    if (admins.some(adm => adm.user.id === msg.from.id)) {
+        askToConfirmBackup(msg);
+    } else {
+        bot.sendMessage(chatId, "Only administrators can ask for backup");
+    }
 })
 
 bot.on('polling_error', (e) => console.log(e))
