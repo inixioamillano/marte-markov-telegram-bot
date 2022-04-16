@@ -56,7 +56,10 @@ const commands = [
         description: 'Generate a quote'
     }, {
         command: '/learn',
-        description: 'Learns a .txt file'
+        description: 'Learns a .txt file or a .json backup'
+    }, {
+        command: '/backup',
+        description: 'Provides a .json file with the chat\'s history'
     }
 ];
 
@@ -345,15 +348,15 @@ onCommand(/^\/learn/, async (msg, match) => {
     const chatId = msg.chat.id;
 
     if (!msg.reply_to_message) {
-        bot.sendMessage(chatId, 'You have to quote a .txt sent file or send me one');
+        bot.sendMessage(chatId, 'You have to quote a .txt or .json sent file or send me one');
         return;
     }
 
     const document = msg.reply_to_message.document;
 
     if (document) {
-        if (!isTxtFile(document)) {
-            bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt format.');
+        if (!isTxtFile(document) && !isJSONFile(document)) {
+            bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt or .json format.');
             return;
         }
         askToLearnMessage(msg.reply_to_message);
@@ -361,23 +364,38 @@ onCommand(/^\/learn/, async (msg, match) => {
 })
 
 bot.on('document', async (msg) => {
-    if (!isTxtFile(msg.document)) {
-        bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt format.');
+    if (!isTxtFile(msg.document) && !isJSONFile(msg.document)) {
+        bot.sendMessage(msg.chat.id, 'Sorry, the file has to be in .txt or .json format.');
         return;
     }
     askToLearnMessage(msg);
 });
 
-bot.on('callback_query', (query) => {
+bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     switch (query.data) {
         case 'data1':
             bot.sendMessage(chatId, 'Alright, learning...');
-            learnText(chatId, query.message.reply_to_message.document)
+            if (isTxtFile(query.message.reply_to_message.document)) {
+                learnText(chatId, query.message.reply_to_message.document)
+            } else if (isJSONFile(query.message.reply_to_message.document)) {
+                learnJSON(chatId, query.message.reply_to_message.document)
+            }
             break;
         case 'data2':
             bot.sendMessage(chatId, 'Okay, maybe next time.');
             break;
+        case 'data3':
+            const admins = await bot.getChatAdministrators(chatId);
+            if (admins.some(adm => adm.user.id === query.from.id)) {
+                const messages = await Message.find({chatId});
+                const input = messages.map(m => {
+                    return m.text;
+                });
+                bot.sendDocument(chatId, Buffer.from(JSON.stringify(input)), {}, {contentType: 'application/json', filename: 'history.json'});
+            } else {
+                bot.answerCallbackQuery(query.id, {text: 'Sorry, only admins can make the backups'});
+            }
         default:
             break;
     }
@@ -400,11 +418,61 @@ const learnText = (chatId, document) => {
     bot.sendMessage(chatId, 'I have learned the text!');
 }
 
+const learnJSON = async (chatId, document) => {
+    const stream = bot.getFileStream(document.file_id);
+    stream.on('data', (data) => {
+        try {
+            const str = data.toString();
+            const arr = JSON.parse(str);
+            arr.forEach(element => {
+                Message.create({
+                    text: element.replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), ''),
+                    chatId: chatId
+                });
+            });
+            bot.sendMessage(chatId, 'I have learned the backup!');
+        } catch (e) {
+            bot.sendMessage(chatId, 'Sorry I couldn\'t learnt it. Does it have the right format?');
+        }
+    });
+}
+
 const isTxtFile = (document) => {
     const extension = document.file_name.split('.').pop();
     if (extension !== 'txt')
         return false;
     return true;
+}
+
+const isJSONFile = (document) => {
+    const extension = document.file_name.split('.').pop();
+    if (extension !== 'json')
+        return false;
+    return true;
+}
+
+const askToConfirmBackup = (msg) => {
+    const options = {
+        'reply_to_message_id': msg.message_id,
+        'reply_markup': {
+            'inline_keyboard': [
+                [
+                    {
+                        text: 'Yes',
+                        callback_data: 'data3'
+                    }
+                ],
+                [
+                    {
+                        text: 'No',
+                        callback_data: 'data2'
+                    }
+                ],
+            ]
+        }
+    }
+
+    bot.sendMessage(msg.chat.id, 'Should I upload a backup of the chat\'s history?', options);
 }
 
 const askToLearnMessage = (msg) => {
@@ -445,6 +513,16 @@ onCommand(/\/contribute/, (msg, match) => {
         label: 'MarTe | Contribution',
         amount: 100
     }])
+})
+
+onCommand(/\/backup/, async (msg) => {
+    const chatId = msg.chat.id;
+    const admins = await bot.getChatAdministrators(chatId);
+    if (admins.some(adm => adm.user.id === msg.from.id)) {
+        askToConfirmBackup(msg);
+    } else {
+        bot.sendMessage("Only administrators can ask for backup");
+    }
 })
 
 bot.on('polling_error', (e) => console.log(e))
