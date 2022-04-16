@@ -381,9 +381,11 @@ bot.on('callback_query', async (query) => {
             } else if (isJSONFile(query.message.reply_to_message.document)) {
                 learnJSON(chatId, query.message.reply_to_message.document)
             }
+            bot.deleteMessage(chatId, query.message.message_id);
             break;
         case 'data2':
             bot.sendMessage(chatId, 'Okay, maybe next time.');
+            bot.deleteMessage(chatId, query.message.message_id);
             break;
         case 'data3':
             const admins = await bot.getChatAdministrators(chatId);
@@ -393,14 +395,16 @@ bot.on('callback_query', async (query) => {
                     return m.text;
                 });
                 bot.sendDocument(chatId, Buffer.from(JSON.stringify(input)), {}, {contentType: 'application/json', filename: 'history.json'});
+                bot.deleteMessage(chatId, query.message.message_id);
             } else {
                 bot.answerCallbackQuery(query.id, {text: 'Sorry, only admins can make the backups'});
             }
+            break;
         default:
+            bot.deleteMessage(chatId, query.message.message_id);
             break;
     }
     // Remove inline keyboard
-    bot.deleteMessage(chatId, query.message.message_id);
 });
 
 const learnText = (chatId, document) => {
@@ -521,7 +525,7 @@ onCommand(/\/backup/, async (msg) => {
     if (admins.some(adm => adm.user.id === msg.from.id)) {
         askToConfirmBackup(msg);
     } else {
-        bot.sendMessage("Only administrators can ask for backup");
+        bot.sendMessage(chatId, "Only administrators can ask for backup");
     }
 })
 
