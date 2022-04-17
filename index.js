@@ -250,7 +250,7 @@ bot.onText(/\/help/, async (msg, match) => {
         + ` I store messages in a database with no information about the author. Your messages are safely stored.\n\n`
         + `You can delete all the messages stored from this group with the /delete command\n\n`
         + `You can check my source code <a href="https://github.com/inixioamillano/marte-markov-telegram-bot">here</a>`
-        + `\n\nSupport this project buying me a coffe at <a href="https://ko-fi.com/inixiodev/">Ko-Fi</a>`,
+        + `\n\nSupport this project buying me a coffee at <a href="https://ko-fi.com/inixiodev/">Ko-Fi</a>`,
     {
         parse_mode: 'HTML'
     });
