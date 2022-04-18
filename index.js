@@ -162,9 +162,9 @@ const generateSpeech = async (chatId, length) => {
 const onCommand = async (regex, callback) => {
     const namedCommandRegex = /\/\w+@/;
     const namedToMeCommandRegex = new RegExp('\\/\\w+@' + process.env.TELEGRAM_BOT_USER);
-    bot.onText(regex, (msg) => {
+    bot.onText(regex, (msg, match) => {
         if (msg.text.match(namedCommandRegex) == null || msg.text.match(namedToMeCommandRegex) != null) {
-            callback(msg);
+            callback(msg, match);
         }
     });
 }
