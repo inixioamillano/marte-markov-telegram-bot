@@ -424,10 +424,18 @@ const learnText = (chatId, document) => {
 
 const learnJSON = async (chatId, document) => {
     const stream = bot.getFileStream(document.file_id);
+    let fullStr = '';
     stream.on('data', (data) => {
         try {
             const str = data.toString();
-            const arr = JSON.parse(str);
+            fullStr += str;
+        } catch (e) {
+            bot.sendMessage(chatId, 'Sorry I couldn\'t learnt it. Does it have the right format?');
+        }
+    });
+    stream.on('end', () => {
+        try {
+            const arr = JSON.parse(fullStr);
             arr.forEach(element => {
                 Message.create({
                     text: element.replace(new RegExp(`@${process.env.TELEGRAM_BOT_USER}`, 'g'), ''),
@@ -438,7 +446,7 @@ const learnJSON = async (chatId, document) => {
         } catch (e) {
             bot.sendMessage(chatId, 'Sorry I couldn\'t learnt it. Does it have the right format?');
         }
-    });
+    })
 }
 
 const isTxtFile = (document) => {
